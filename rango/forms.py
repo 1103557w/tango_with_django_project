@@ -9,7 +9,9 @@ class CategoryForm(forms.ModelForm):
     name = forms.CharField(max_length=128, help_text="Please enter the category name.")
     views = forms.IntegerField(widget=forms.HiddenInput(), initial=initialVal)
     likes = forms.IntegerField(widget=forms.HiddenInput(), initial=initialVal)
-    slug = forms.CharField(widget=forms.HiddenInput(), initial=initialVal)
+    slug = forms.CharField(
+        widget=forms.HiddenInput(), initial=initialVal, required=False
+    )
 
     class Meta:
         # provides assosciation between the ModelForm and a model
