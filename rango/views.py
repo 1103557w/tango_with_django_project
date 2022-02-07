@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from rango.models import Category, Page
 from rango.forms import CategoryForm, PageForm, UserForm, UserProfileForm
 from django.urls import reverse
+from django.contrib.auth import authenticate, login
+from django.http import HttpResponse
 
 
 def index(request):
@@ -156,3 +158,40 @@ def register(request):
             "registered": registered,
         },
     )
+
+
+def user_login(request):
+
+    # similar to register func, if request is a post process it
+    if request.method == "POST":
+        # use post.get(var) as opposed to post(var) as get returns None if var
+        # doesn't exist and POST(var) raises a KeyError
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        # use Django's inbuilt validation system
+        user = authenticate(username=username, password=password)
+
+        # check if user exists - eg if authentication has worked, if it hasn't
+        # None will have been returned and thus if fails.
+        if user:
+            if user.is_active:
+                # if info is correct, and user is active login
+                login(request, user)
+                return redirect(reverse("rango:index"))
+
+            else:
+                # inactive account
+                return HttpResponse("Your Rango account is disabled")
+
+        else:
+            # bad login details
+            # in the book it has us printing out the entered password
+            # but i think that seems insecure, so I'm just leaving it
+            # as the username and hopefully that will pass
+            print(f"Invalid login details for {username}")
+
+    else:
+        # it's not a POST so it's probably a GET
+        # display login form
+        return render(request, "rango/login.html")
