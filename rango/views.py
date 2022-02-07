@@ -1,9 +1,6 @@
-from django.shortcuts import render
-from rango.models import Category
-from rango.models import Page
-from rango.forms import CategoryForm
-from rango.forms import PageForm
-from django.shortcuts import redirect
+from django.shortcuts import render, redirect
+from rango.models import Category, Page
+from rango.forms import CategoryForm, PageForm, UserForm, UserProfileForm
 from django.urls import reverse
 
 
@@ -109,3 +106,53 @@ def add_page(request, category_name_slug):
 
     context_dict = {"form": form, "category": category}
     return render(request, "rango/add_page.html", context=context_dict)
+
+
+def register(request):
+    # bool to know if registration succeeded
+    registered = False
+
+    if request.method == "POST":
+        # gets info from form
+        user_form = UserForm(request.POST)
+        profile_form = UserProfileForm(request.POST)
+
+        if user_form.is_valid() and profile_form.is_valid():
+            user = user_form.save()
+
+            # hash password
+            user.set_password(user.password)
+            user.save()
+
+            # commit false so we can ensure the user profile form is properly
+            # assosciated thus maintaining ref integrity
+            profile = profile_form.save(commit=False)
+            profile.user = user
+
+            # check if user set picture and save it if so
+            if "picture" in request.FILES:
+                profile.picture = request.FILES["picture"]
+
+            profile.save()
+
+            # reg successful so update reg bool
+            registered = True
+
+        else:
+            # prints error to terminal if form invalid
+            print(user_form.errors, profile_form.errors)
+
+    else:
+        # not POST so we just render form
+        user_form = UserForm()
+        profile_form = UserProfileForm()
+
+    return render(
+        request,
+        "rango/register.html",
+        context={
+            "user_form": user_form,
+            "profile_form": profile_form,
+            "registered": registered,
+        },
+    )
